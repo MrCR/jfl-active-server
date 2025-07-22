@@ -1,0 +1,28 @@
+{
+  "name": "alarm-tcp-server",
+  "version": "1.0.0",
+  "description": "Servidor TCP para central de alarme com integração MQTT",
+  "main": "alarm-server.js",
+  "scripts": {
+    "start": "node alarm-server.js",
+    "dev": "nodemon alarm-server.js",
+    "test": "node test-alarm-simulator.js",
+    "monitor": "node mqtt-monitor.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.3.4",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "keywords": [
+    "alarm",
+    "tcp",
+    "mqtt",
+    "server",
+    "security"
+  ],
+  "author": "",
+  "license": "MIT"
+}

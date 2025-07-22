@@ -1,0 +1,15 @@
+[Unit]
+Description=Processa eventos alarme JFL
+After=network.target
+After=mosquitto.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+WorkingDirectory=/root/node-scripts/alarme/
+ExecStart=/usr/bin/node /root/node-scripts/alarme/alarm-server.js
+
+[Install]
+WantedBy=multi-user.target
