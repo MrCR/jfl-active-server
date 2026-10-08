@@ -1,6 +1,8 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 const {
+    eventFrameLength,
+    parseEventClock,
     STATUS_FRAME,
     HANDSHAKE_FRAME,
     armFrame,
@@ -103,4 +105,24 @@ test('Contact ID no formato que o MQTT já publica', () => {
     assert.equal(payload.timestamp, '2026-10-08T12:00:00.000Z');
     assert.equal(payload.raw_data.hex, frame.toString('hex'));
     assert.match(payload.message, /3401/);
+    assert.equal(event.panelTime, null);
+    assert.equal(eventFrameLength(frame), 16);
+});
+
+test('evento com relógio da central usa o carimbo, não a hora da chegada', () => {
+    const frame = Buffer.concat([
+        Buffer.from('$00011130010077', 'ascii'),
+        Buffer.from([0x21]),
+        Buffer.from([0x11, 0x18, 0x55, 0x08, 0x10, 0x26]),
+    ]);
+    const clock = parseEventClock(frame.subarray(16, 22));
+    assert.equal(clock.hour, 11);
+    assert.equal(clock.day, 8);
+    assert.equal(clock.year, 2026);
+    assert.equal(eventFrameLength(frame), 22);
+    const event = parseContactId(frame);
+    assert.equal(event.panelTime, '08/10/2026 11:18:55');
+    assert.equal(event.timestamp, '2026-10-08T11:18:55-03:00');
+    const next = Buffer.from('$00011130010077!', 'ascii');
+    assert.equal(eventFrameLength(Buffer.concat([frame.subarray(0, 16), next])), 16);
 });

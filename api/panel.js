@@ -12,6 +12,7 @@ const {
     clockFrame,
     parseStatus,
     parseContactId,
+    eventFrameLength,
     frameKind,
     panelMode,
 } = require('./protocol');
@@ -214,7 +215,7 @@ function createPanel({ store, statusTtlMs = 10000, commandTimeoutMs = 12000, onE
         socket.write(EVENT_ACK);
         const event = parseContactId(frame);
         if (!event) return;
-        event.timestamp = new Date().toISOString();
+        if (!event.timestamp) event.timestamp = new Date().toISOString();
         link.lastEvent = {
             type: event.type,
             event_code: event.event_code,
@@ -254,11 +255,18 @@ function createPanel({ store, statusTtlMs = 10000, commandTimeoutMs = 12000, onE
                 link.buffer = link.buffer.subarray(1);
                 continue;
             }
+            if (header.kind === 'event') {
+                const length = eventFrameLength(link.buffer);
+                if (!length) return;
+                const frame = Buffer.from(link.buffer.subarray(0, length));
+                link.buffer = link.buffer.subarray(length);
+                onEventFrame(socket, frame);
+                continue;
+            }
             if (link.buffer.length < header.length) return;
             const frame = Buffer.from(link.buffer.subarray(0, header.length));
             link.buffer = link.buffer.subarray(header.length);
             if (header.kind === 'ident') handleIdent(socket, frame);
-            else if (header.kind === 'event') onEventFrame(socket, frame);
             else if (header.kind === 'status') onStatusFrame(frame);
             else if (header.kind === 'clock') onClockFrame(frame);
         }

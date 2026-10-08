@@ -205,6 +205,30 @@ test('token fixo arma em nome da automação e teclado ou controle continuam avi
     }
 });
 
+test('usuário 000 da central aceita nome e a notificação mostra o horário do evento', async () => {
+    const app = await boot();
+    try {
+        const saved = app.store.savePanelUsers([
+            { code: '000', name: 'Master' },
+            { code: '', name: 'vazio' },
+            { code: '099', name: 'App' },
+        ]);
+        assert.deepEqual(saved.map((item) => item.code), ['000', '099']);
+        assert.equal(app.store.panelUserName('000'), 'Master');
+        const { eventText } = require('../api/notify');
+        const text = eventText(app.store, {
+            type: 'ARM',
+            event_code: '3401',
+            zone_user: '000',
+            panelTime: '08/10/2026 11:18:54',
+        });
+        assert.match(text, /Master/);
+        assert.match(text, /08\/10\/2026 11:18:54/);
+    } finally {
+        await app.close();
+    }
+});
+
 test('admin apaga outro usuário e a sessão dele deixa de valer', async () => {
     const app = await boot();
     try {

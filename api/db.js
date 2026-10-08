@@ -304,9 +304,10 @@ function createStore(file) {
             db.exec('DELETE FROM panel_user_names');
             const insert = db.prepare('INSERT INTO panel_user_names (code, name) VALUES (?, ?)');
             for (const row of rows) {
-                const code = String(row.code || '').replace(/\D/g, '').padStart(3, '0').slice(-3);
+                const digits = String(row.code ?? '').replace(/\D/g, '');
                 const name = String(row.name || '').trim().slice(0, 40);
-                if (!name || code === '000') continue;
+                if (!digits || !name) continue;
+                const code = digits.padStart(3, '0').slice(-3);
                 insert.run(code, name);
             }
             return this.listPanelUsers();

@@ -180,29 +180,60 @@ function panelOrigin(eventCode) {
     return '';
 }
 
+function formatWhen(when) {
+    const date = when instanceof Date ? when : new Date(when);
+    if (Number.isNaN(date.getTime())) return '';
+    const parts = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(date);
+    const value = (type) => parts.find((part) => part.type === type)?.value || '';
+    return `${value('day')}/${value('month')}/${value('year')} ${value('hour')}:${value('minute')}:${value('second')}`;
+}
+
+function withWhen(text, when) {
+    const label = typeof when === 'string' && when.includes('/') ? when : formatWhen(when);
+    return label ? `${text} · ${label}` : text;
+}
+
 function eventText(store, event) {
     const zoneNumber = Number.parseInt(event.zone_user, 10);
     const zone = store.zoneName(zoneNumber);
     const person = store.panelUserName(event.zone_user);
     const origin = panelOrigin(event.event_code);
+    let text;
     switch (event.type) {
         case 'ARM':
-            return origin ? `Central armada por ${person}, ${origin}` : `Central armada por ${person}`;
+            text = origin ? `Central armada por ${person}, ${origin}` : `Central armada por ${person}`;
+            break;
         case 'DISARM':
-            return origin ? `Central desarmada por ${person}, ${origin}` : `Central desarmada por ${person}`;
+            text = origin ? `Central desarmada por ${person}, ${origin}` : `Central desarmada por ${person}`;
+            break;
         case 'ALARM_TRIGGER':
-            return `Disparo na zona ${zone}`;
+            text = `Disparo na zona ${zone}`;
+            break;
         case 'ALARM_RESTORE':
-            return `Restauração na zona ${zone}`;
+            text = `Restauração na zona ${zone}`;
+            break;
         case 'AC_FAULT':
-            return 'Falha de energia';
+            text = 'Falha de energia';
+            break;
         case 'AC_RESTORE':
-            return 'Energia restaurada';
+            text = 'Energia restaurada';
+            break;
         case 'BYPASS':
-            return `Zona inibida: ${zone}`;
+            text = `Zona inibida: ${zone}`;
+            break;
         default:
-            return event.message;
+            text = event.message;
     }
+    return withWhen(text, event.panelTime || event.timestamp);
 }
 
 module.exports = { sendTelegram, sendFcm, actionText, eventText };

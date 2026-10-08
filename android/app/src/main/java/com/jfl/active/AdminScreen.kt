@@ -389,7 +389,7 @@ private fun PersonEditor(person: PersonItem, model: AdminViewModel) {
 @Composable
 private fun PanelPeopleSection(model: AdminViewModel) {
     var draft by remember(model.panelPeople) { mutableStateOf(model.panelPeople.ifEmpty { listOf(PanelPerson("", "")) }) }
-    Text("Código de 3 dígitos do Contact ID. Teclado e controle usam este nome na notificação.")
+    Text("Código de 3 dígitos do Contact ID, inclusive 000 do master. Teclado e controle usam este nome na notificação.")
     CardBlock {
         draft.forEachIndexed { index, person ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

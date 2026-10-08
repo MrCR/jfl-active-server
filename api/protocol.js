@@ -200,6 +200,50 @@ function eventMessage(type, eventCode, zoneUser) {
     }
 }
 
+function bcdClock(bytes) {
+    if (bytes.length < 6) return null;
+    if (![...bytes.slice(0, 6)].every((byte) => (byte >> 4) <= 9 && (byte & 0x0f) <= 9)) return null;
+    return [...bytes.slice(0, 6)].map((byte) => bcd(byte));
+}
+
+function clockFields(day, month, year, hour, minute, second) {
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    if (hour > 23 || minute > 59 || second > 59) return null;
+    return { day, month, year: 2000 + year, hour, minute, second };
+}
+
+function parseEventClock(bytes) {
+    const parts = bcdClock(bytes);
+    if (!parts) return null;
+    const [a, b, c, d, e, f] = parts;
+    const hourFirst = clockFields(d, e, f, a, b, c);
+    const dayFirst = clockFields(a, b, c, d, e, f);
+    return hourFirst || dayFirst;
+}
+
+function formatPanelClock(clock) {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${pad(clock.day)}/${pad(clock.month)}/${clock.year} ${pad(clock.hour)}:${pad(clock.minute)}:${pad(clock.second)}`;
+}
+
+function panelClockIso(clock) {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${clock.year}-${pad(clock.month)}-${pad(clock.day)}T${pad(clock.hour)}:${pad(clock.minute)}:${pad(clock.second)}-03:00`;
+}
+
+function eventFrameLength(buffer) {
+    if (buffer.length < EVENT_LENGTH || buffer[0] !== 0x24) return 0;
+    if (buffer.length >= EVENT_LENGTH + 6 && parseEventClock(buffer.subarray(EVENT_LENGTH, EVENT_LENGTH + 6))) {
+        return EVENT_LENGTH + 6;
+    }
+    if (buffer.length > EVENT_LENGTH && buffer.length < EVENT_LENGTH + 6) {
+        const extra = buffer.subarray(EVENT_LENGTH);
+        const partialClock = [...extra].every((byte) => (byte >> 4) <= 9 && (byte & 0x0f) <= 9);
+        if (partialClock) return 0;
+    }
+    return EVENT_LENGTH;
+}
+
 function parseContactId(frame) {
     const ascii = frame.toString('ascii');
     if (frame[0] !== 0x24 || ascii.length < 15) return null;
@@ -207,6 +251,9 @@ function parseContactId(frame) {
     const eventCode = ascii.substring(5, 9);
     const type = EVENT_TYPES[eventCode] || 'UNKNOWN';
     const zoneUser = ascii.substring(11, 14);
+    const clock = frame.length >= EVENT_LENGTH + 6
+        ? parseEventClock(frame.subarray(EVENT_LENGTH, EVENT_LENGTH + 6))
+        : null;
 
     return {
         type,
@@ -215,6 +262,8 @@ function parseContactId(frame) {
         qualifier_code: ascii.substring(9, 11),
         zone_user: zoneUser,
         message: eventMessage(type, eventCode, zoneUser),
+        panelTime: clock ? formatPanelClock(clock) : null,
+        timestamp: clock ? panelClockIso(clock) : null,
         raw_data: {
             hex: frame.toString('hex'),
             ascii,
@@ -268,6 +317,8 @@ module.exports = {
     clockFrame,
     parseStatus,
     parseContactId,
+    parseEventClock,
+    eventFrameLength,
     mqttPayload,
     frameKind,
     panelMode,
