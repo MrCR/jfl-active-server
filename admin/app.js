@@ -172,7 +172,8 @@ function renderUsers(users) {
             <select name="role"><option value="user">user</option><option value="admin">admin</option></select>
             <input name="telegramChatId" placeholder="chat Telegram" aria-label="Chat">
             <input name="password" type="password" placeholder="nova senha" aria-label="Senha">
-            <button type="submit">Salvar</button>`;
+            <button type="submit">Salvar</button>
+            <button type="button" class="ghost" data-delete>Apagar</button>`;
         form.querySelector('strong').textContent = user.username;
         form.elements.displayName.value = user.displayName;
         form.elements.role.value = user.role;
@@ -193,6 +194,11 @@ function renderUsers(users) {
                 await load();
             });
         });
+        form.querySelector('[data-delete]').addEventListener('click', () => run(async () => {
+            if (!window.confirm(`Apagar o usuário ${user.username}?`)) return;
+            await api(`/api/admin/users/${user.id}`, { method: 'DELETE' });
+            await load();
+        }));
         box.append(form);
     }
 }

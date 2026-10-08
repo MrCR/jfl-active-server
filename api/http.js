@@ -355,6 +355,18 @@ function createApi({ store, panel, finishAction, root }) {
             send(res, 200, { user: store.updateUser(id, fields) });
             return;
         }
+        if (req.method === 'DELETE' && userMatch) {
+            const id = Number(userMatch[1]);
+            const current = store.findUserById(id);
+            if (!current) throw fail('usuario nao encontrado', 404);
+            if (current.id === user.id) throw fail('nao pode excluir a propria conta', 400);
+            if (current.role === 'admin' && store.countAdmins() <= 1) {
+                throw fail('mantenha ao menos um admin', 400);
+            }
+            store.deleteUser(id);
+            send(res, 200, { ok: true });
+            return;
+        }
 
         if (req.method === 'GET' && url.pathname === '/api/admin/zones') {
             send(res, 200, { zones: store.listZones() });

@@ -165,6 +165,19 @@ function createStore(file) {
             db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...values);
             return this.findUserById(id);
         },
+        deleteUser(id) {
+            db.exec('BEGIN');
+            try {
+                db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
+                db.prepare('DELETE FROM devices WHERE user_id = ?').run(id);
+                const info = db.prepare('DELETE FROM users WHERE id = ?').run(id);
+                db.exec('COMMIT');
+                return info.changes > 0;
+            } catch (error) {
+                db.exec('ROLLBACK');
+                throw error;
+            }
+        },
         createSession(userId) {
             const token = newToken();
             db.prepare('INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)')

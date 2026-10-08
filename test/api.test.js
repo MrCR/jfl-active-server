@@ -205,6 +205,32 @@ test('token fixo arma em nome da automação e teclado ou controle continuam avi
     }
 });
 
+test('admin apaga outro usuário e a sessão dele deixa de valer', async () => {
+    const app = await boot();
+    try {
+        user(app, 'ana', 'admin', 'Ana');
+        user(app, 'bob', 'user', 'Bob');
+        user(app, 'cid', 'user', 'Cid');
+        const ana = await login(app, 'ana');
+        const bob = await login(app, 'bob');
+        const cid = await login(app, 'cid');
+        const removed = await api(app, ana.token, 'DELETE', `/api/admin/users/${bob.user.id}`);
+        assert.equal(removed.status, 200);
+        assert.equal(removed.body.ok, true);
+        const listed = await api(app, ana.token, 'GET', '/api/admin/users');
+        assert.equal(listed.body.users.some((item) => item.username === 'bob'), false);
+        const dead = await api(app, bob.token, 'GET', '/api/me');
+        assert.equal(dead.status, 401);
+        const self = await api(app, ana.token, 'DELETE', `/api/admin/users/${ana.user.id}`);
+        assert.equal(self.status, 400);
+        assert.match(self.body.error, /propria conta/);
+        const denied = await api(app, cid.token, 'DELETE', `/api/admin/users/${ana.user.id}`);
+        assert.equal(denied.status, 403);
+    } finally {
+        await app.close();
+    }
+});
+
 test('usuário comum não entra no admin e a central desconectada recusa comando', async () => {
     const app = await boot();
     try {
