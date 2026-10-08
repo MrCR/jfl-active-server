@@ -9,7 +9,6 @@ const STATIC = {
     '/': ['web', 'index.html', 'text/html; charset=utf-8'],
     '/app.js': ['web', 'app.js', 'text/javascript; charset=utf-8'],
     '/style.css': ['web', 'style.css', 'text/css; charset=utf-8'],
-    '/admin': ['admin', 'index.html', 'text/html; charset=utf-8'],
     '/admin/': ['admin', 'index.html', 'text/html; charset=utf-8'],
     '/admin/app.js': ['admin', 'app.js', 'text/javascript; charset=utf-8'],
     '/admin/style.css': ['admin', 'style.css', 'text/css; charset=utf-8'],
@@ -117,6 +116,11 @@ function createApi({ store, panel, finishAction, root }) {
         const url = new URL(req.url, 'http://localhost');
         if (req.method === 'OPTIONS') {
             send(res, 204, {});
+            return;
+        }
+        if (req.method === 'GET' && url.pathname === '/admin') {
+            res.writeHead(308, { location: `admin/${url.search}` });
+            res.end();
             return;
         }
         if (req.method === 'GET' && url.pathname === '/favicon.ico') {

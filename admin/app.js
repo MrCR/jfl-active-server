@@ -10,8 +10,16 @@ function show(node, text) {
     node.textContent = text || '';
 }
 
+function apiUrl(pathname) {
+    const path = location.pathname;
+    const root = /\/admin\/?$/.test(path)
+        ? path.replace(/\/admin\/?$/, '')
+        : path.replace(/\/$/, '');
+    return `${root}${pathname}`;
+}
+
 async function api(pathname, options = {}) {
-    const response = await fetch(pathname, {
+    const response = await fetch(apiUrl(pathname), {
         method: options.method || 'GET',
         headers: {
             authorization: `Bearer ${token}`,
@@ -34,7 +42,7 @@ function logout() {
     localStorage.removeItem('jfl-token');
     adminView.hidden = true;
     loginView.hidden = false;
-    if (current) fetch('/api/logout', { method: 'POST', headers: { authorization: `Bearer ${current}` } });
+    if (current) fetch(apiUrl('/api/logout'), { method: 'POST', headers: { authorization: `Bearer ${current}` } });
 }
 
 function field(form, name) {
@@ -288,7 +296,7 @@ document.querySelector('#login-form').addEventListener('submit', async (event) =
     const data = new FormData(event.target);
     show(document.querySelector('#login-error'), '');
     try {
-        const response = await fetch('/api/login', {
+        const response = await fetch(apiUrl('/api/login'), {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({

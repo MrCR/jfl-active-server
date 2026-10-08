@@ -29,8 +29,16 @@ function showError(node, text) {
     node.textContent = text || '';
 }
 
+function apiUrl(pathname) {
+    const path = location.pathname;
+    const root = /\/admin\/?$/.test(path)
+        ? path.replace(/\/admin\/?$/, '')
+        : path.replace(/\/$/, '');
+    return `${root}${pathname}`;
+}
+
 async function request(pathname, options = {}) {
-    const response = await fetch(pathname, {
+    const response = await fetch(apiUrl(pathname), {
         method: options.method || 'GET',
         headers: {
             authorization: `Bearer ${token}`,
@@ -80,7 +88,7 @@ function logout() {
     panelView.hidden = true;
     loginView.hidden = false;
     if (current) {
-        fetch('/api/logout', { method: 'POST', headers: { authorization: `Bearer ${current}` } });
+        fetch(apiUrl('/api/logout'), { method: 'POST', headers: { authorization: `Bearer ${current}` } });
     }
 }
 
@@ -183,7 +191,7 @@ loginForm.addEventListener('submit', async (event) => {
     const data = new FormData(loginForm);
     showError(loginError, '');
     try {
-        const response = await fetch('/api/login', {
+        const response = await fetch(apiUrl('/api/login'), {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
