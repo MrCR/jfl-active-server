@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
@@ -17,9 +19,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -56,6 +63,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val bar = android.graphics.Color.parseColor("#EEF2F5")
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(bar, bar),
+            navigationBarStyle = SystemBarStyle.light(bar, bar),
+        )
         val manager = getSystemService(NotificationManager::class.java)
         AlarmMessagingService.ensureChannel(manager)
         if (Build.VERSION.SDK_INT >= 33 &&
@@ -65,7 +77,12 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFFEEF2F5)) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout)),
+                    color = Color(0xFFEEF2F5),
+                ) {
                     val state by model.state
                     val owner = LocalLifecycleOwner.current
                     DisposableEffect(owner) {
