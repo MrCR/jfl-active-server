@@ -1,0 +1,80 @@
+:root {
+    color-scheme: light;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: #eef2f5;
+    color: #1c2430;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 16px;
+}
+
+.card {
+    width: min(720px, 100%);
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #dde3ea;
+    border-radius: 16px;
+    padding: 20px;
+}
+
+h1 { margin: 0 0 8px; font-size: 1.6rem; }
+h2 { margin: 20px 0 10px; font-size: 1rem; }
+
+label { display: block; margin: 12px 0; font-size: 0.95rem; }
+input, select {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px;
+    border: 1px solid #c5d0db;
+    border-radius: 10px;
+    font: inherit;
+}
+
+button, .zone {
+    font: inherit;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    min-height: 48px;
+    padding: 12px 14px;
+    cursor: pointer;
+}
+
+button { width: 100%; background: #1d4e89; color: #fff; }
+button.ghost { background: #fff; color: #1c2430; border-color: #c5d0db; }
+button:disabled { opacity: 0.55; cursor: default; }
+button.arm { background: #b45309; }
+button.stay { background: #1d4e89; }
+button.disarm { background: #0b6e4f; }
+button.inhibit { background: #9a3412; }
+
+.top, .top-actions { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.top-actions a { color: #1d4e89; }
+.muted { color: #5c6b7a; margin: 0; }
+.error { color: #9f1239; margin: 8px 0; }
+
+.actions { display: grid; gap: 8px; margin-top: 16px; }
+.zones { display: flex; flex-wrap: wrap; gap: 8px; }
+.zone {
+    width: calc(50% - 8px);
+    background: #f7f9fb;
+    border-color: #d5dee7;
+    text-align: left;
+    color: inherit;
+}
+.zone small { display: block; color: #5c6b7a; }
+.zone.selected { border-color: #9a3412; background: #fff4ed; }
+.zone.disabled { opacity: 0.45; cursor: default; }
+.zone.open { background: #fff7ed; border-color: #b45309; }
+.zone.alarm { background: #fef2f2; border-color: #9f1239; }
+.zone.inhibited { background: #fff7ed; }
+
+@media (min-width: 640px) {
+    .actions { grid-template-columns: 1fr 1fr; }
+    .actions .wide { grid-column: 1 / -1; }
+    .zone { width: calc(33.33% - 8px); }
+}

@@ -1,0 +1,18 @@
+[Unit]
+Description=API da central JFL Active 32 Duo
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=2
+WorkingDirectory=/home/mrcrassi/dev/jfl-active-server
+ExecStart=/usr/bin/node /home/mrcrassi/dev/jfl-active-server/api/server.js
+Environment=API_HOST=0.0.0.0
+Environment=API_PORT=8080
+Environment=PANEL_HOST=0.0.0.0
+Environment=PANEL_PORT=9999
+Environment=MQTT_BROKER=mqtt://localhost:1883
+
+[Install]
+WantedBy=multi-user.target

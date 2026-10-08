@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alarme</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main id="login" class="card">
+        <h1>Alarme</h1>
+        <form id="login-form">
+            <label>Usuário<input name="username" autocomplete="username" required></label>
+            <label>Senha<input name="password" type="password" autocomplete="current-password" required></label>
+            <p id="login-error" class="error" hidden></p>
+            <button type="submit">Entrar</button>
+        </form>
+    </main>
+    <main id="panel" class="card" hidden>
+        <header class="top">
+            <div>
+                <h1 id="mode">Sem leitura</h1>
+                <p id="meta" class="muted"></p>
+            </div>
+            <div class="top-actions">
+                <a id="admin-link" href="/admin" hidden>Admin</a>
+                <button id="logout" type="button" class="ghost">Sair</button>
+            </div>
+        </header>
+        <p id="banner" class="error" hidden></p>
+        <section id="actions" class="actions"></section>
+        <section>
+            <h2>Zonas</h2>
+            <div id="zones" class="zones"></div>
+        </section>
+    </main>
+    <script src="/app.js"></script>
+</body>
+</html>

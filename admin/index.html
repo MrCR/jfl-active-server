@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin do alarme</title>
+    <link rel="stylesheet" href="/admin/style.css">
+</head>
+<body>
+    <main id="login" class="card">
+        <h1>Admin</h1>
+        <form id="login-form">
+            <label>Usuário<input name="username" autocomplete="username" required></label>
+            <label>Senha<input name="password" type="password" autocomplete="current-password" required></label>
+            <p id="login-error" class="error" hidden></p>
+            <button type="submit">Entrar</button>
+        </form>
+    </main>
+    <main id="admin" hidden>
+        <header class="top">
+            <h1>Admin</h1>
+            <div>
+                <a href="/">Abrir o app</a>
+                <button id="logout" type="button" class="ghost">Sair</button>
+            </div>
+        </header>
+        <p id="banner" class="error" hidden></p>
+
+        <section class="card">
+            <h2>Relógio, Telegram e Firebase</h2>
+            <form id="settings-form">
+                <label>Intervalo do relógio (minutos)<input name="clock" type="number" min="5" max="1440" required></label>
+                <label>Token do bot<input name="token" type="password" placeholder="em branco mantém o atual" autocomplete="off"></label>
+                <p id="telegram-state" class="muted"></p>
+                <label>Conta de serviço do Firebase<textarea name="firebase" rows="4" placeholder="JSON da conta de serviço. Em branco mantém o atual."></textarea></label>
+                <p id="firebase-state" class="muted"></p>
+                <button type="submit">Salvar</button>
+                <button id="clear-token" type="button" class="ghost">Remover token</button>
+                <button id="clear-firebase" type="button" class="ghost">Remover Firebase</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Automações</h2>
+            <p class="muted">Token fixo para arme, stay, desarme e status. O nome aparece no evento e na notificação.</p>
+            <div id="hooks"></div>
+            <form id="hook-form">
+                <label>Nome<input name="name" required placeholder="Casa"></label>
+                <button type="submit">Gerar token</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Usuários</h2>
+            <div id="users"></div>
+            <form id="user-form">
+                <h3>Novo usuário</h3>
+                <label>Usuário<input name="username" required></label>
+                <label>Senha<input name="password" type="password" required></label>
+                <label>Nome na notificação<input name="displayName" required></label>
+                <label>Papel
+                    <select name="role"><option value="user">user</option><option value="admin">admin</option></select>
+                </label>
+                <label>Chat do Telegram<input name="telegramChatId"></label>
+                <button type="submit">Cadastrar</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Zonas</h2>
+            <p class="muted">O arme stay usa as zonas marcadas. Inibir só vale da 1 à 8.</p>
+            <form id="zones-form">
+                <div id="zones"></div>
+                <button type="submit">Salvar zonas</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Usuários da central</h2>
+            <p class="muted">O código de 3 dígitos do Contact ID, como 099, vira este nome na notificação.</p>
+            <form id="panel-users-form">
+                <div id="panel-users"></div>
+                <button type="button" id="add-panel-user" class="ghost">Adicionar</button>
+                <button type="submit">Salvar nomes</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Programação</h2>
+            <div id="schedules"></div>
+            <form id="schedule-form">
+                <h3>Nova ação</h3>
+                <label>Nome<input name="name" required></label>
+                <label>Ação
+                    <select name="action">
+                        <option value="arm">Armar</option>
+                        <option value="disarm">Desarmar</option>
+                        <option value="stay">Arme stay</option>
+                    </select>
+                </label>
+                <label class="check"><input name="runOnce" type="checkbox"> Uma vez</label>
+                <label>Horário<input name="time" type="time" value="22:00"></label>
+                <fieldset>
+                    <legend>Dias</legend>
+                    <div id="days" class="days"></div>
+                </fieldset>
+                <label>Data, se for uma vez<input name="onceAt" type="datetime-local"></label>
+                <fieldset>
+                    <legend>Zonas a inibir</legend>
+                    <div id="schedule-zones" class="days"></div>
+                </fieldset>
+                <p class="muted">No stay, sem zona marcada, vale o conjunto do arme stay.</p>
+                <button type="submit">Programar</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Aparelhos</h2>
+            <div id="devices"></div>
+        </section>
+        <section class="card">
+            <h2>Eventos</h2>
+            <div id="events"></div>
+        </section>
+        <section class="card">
+            <h2>Chamadas</h2>
+            <div id="calls"></div>
+        </section>
+    </main>
+    <script src="/admin/app.js"></script>
+</body>
+</html>

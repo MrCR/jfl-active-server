@@ -1,160 +1,122 @@
-# Servidor TCP para Central de Alarme Active 32 Duo
+# Gateway da central JFL Active 32 Duo
 
-Este projeto implementa um servidor TCP que recebe eventos da central de alarme **Active 32 Duo PCI-043V7** (firmware 4.9) através do módulo ethernet **ME-04**, processando os dados e publicando-os via MQTT para integração com sistemas de automação residencial.
-Embora tenha sido desenvolvido para a central 32 Duo de versão antiga, provavelmente é compatível com outros modelos **embora não os tenha testado**
+A central disca para este servidor na rede local. A API guarda usuários, zonas e eventos, publica os mesmos eventos MQTT de antes e atende o app Android. A porta do módulo ME-04 não precisa ficar exposta na internet.
 
-## Sobre o Projeto
+O listener antigo continua em `alarm-server.js`. Não rode os dois ao mesmo tempo: os dois escutam a porta **9999**.
 
-O script foi desenvolvido para facilitar automações utilizando eventos específicos da central de alarme. Foram mapeados apenas os eventos necessários para o caso de uso atual, mas a arquitetura permite fácil expansão para outros eventos baseados na **tabela de eventos Contact ID** (item 29 do manual da central).
+## O que sobe
 
-## Eventos Mapeados
+- **9999**: a central conecta aqui.
+- **8080**: API, app web e admin.
+- MQTT em `mqtt://localhost:1883`, tópico `alarm/events`. Para desligar, exporte `MQTT_BROKER=`.
 
-### Eventos de Arme/Desarme
-- **3441, 3401, 3407, 3409**: Sistema armado
-- **1441, 1401, 1407, 1409**: Sistema desarmado
-
-### Eventos de Alarme
-- **1130**: Alarme disparado
-- **3130**: Alarme restaurado
-
-### Eventos de Energia
-- **1301**: Falha de energia (AC Fault)
-- **3301**: Energia restaurada (AC Restore)
-
-## Configuração
-
-### Pré-requisitos
-- Node.js (versão 16 ou superior)
-- Broker MQTT (ex: Mosquitto)
-- Central de alarme Active 32 Duo com módulo ME-04 configurado
-
-### Instalação
 ```bash
 npm install
+npm run api
 ```
 
-### Configuração da Central
-Configure o módulo ME-04 para enviar eventos TCP para o endereço IP do servidor na porta **9999**.
-Verifique no manual sobre reporte para monitoramento.
+O app web fica em `http://IP-DA-MAQUINA:8080` e o admin em `/admin`.
 
-### Configuração do Broker MQTT
-Edite as configurações no arquivo `alarm-server.js`:
-```javascript
-const MQTT_BROKER = 'mqtt://localhost:1883'; // Ajuste conforme seu broker
-const MQTT_TOPIC = 'alarm/events';
-```
+Crie o primeiro usuário:
 
-## Comandos Disponíveis
-
-### Iniciar o servidor
 ```bash
-npm start
+node api/bin/create-user.js --username NOME --password SENHA --role admin --name "Nome na notificação"
 ```
-Inicia o servidor TCP na porta 9999 e conecta ao broker MQTT.
 
-### Modo desenvolvimento
+## Serviço
+
+O arquivo `jfl-api.service` aponta para este repositório. No Raspberry, ajuste `WorkingDirectory` e `ExecStart` para a pasta real. Pare o `alarme-server.service` antigo antes, se ele ainda estiver na porta 9999.
+
 ```bash
-npm run dev
+sudo cp jfl-api.service /etc/systemd/system/jfl-api.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now jfl-api
+sudo systemctl status jfl-api
+journalctl -u jfl-api -f
+sudo systemctl restart jfl-api
 ```
-Inicia o servidor com auto-reload usando nodemon (útil durante desenvolvimento).
 
-### Executar testes
+## Token das automações
+
+No admin, aba Tokens, cadastre um nome. Esse nome aparece no evento e na notificação. A resposta é sempre JSON.
+
+Troque `SEU_TOKEN` e o endereço.
+
 ```bash
-npm test
-```
-Executa o simulador de eventos para testar o servidor.
+# status
+curl -s http://192.168.6.119:8080/api/hook?action=status \
+  -H "authorization: Bearer SEU_TOKEN"
 
-### Monitorar MQTT
+# arme total
+curl -s -X POST http://192.168.6.119:8080/api/hook \
+  -H "authorization: Bearer SEU_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"action":"arm"}'
+
+# arme stay (inibe as zonas marcadas no admin e arma)
+curl -s -X POST http://192.168.6.119:8080/api/hook \
+  -H "authorization: Bearer SEU_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"action":"stay"}'
+
+# desarme
+curl -s -X POST http://192.168.6.119:8080/api/hook \
+  -H "authorization: Bearer SEU_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"action":"disarm"}'
+```
+
+O token também pode ir no corpo: `{"token":"SEU_TOKEN","action":"status"}`. Esse token não abre o admin.
+
+Um arme, stay ou desarme feito pela API ou pelo token gera um aviso só, no nome de quem executou. Teclado e controle continuam avisando com o nome cadastrado na aba Central.
+
+## App Android
+
+O APK de instalação fica em `android/app/build/outputs/apk/release/app-release.apk`. A chave de assinatura está em `android/release.keystore` e a senha em `android/keystore.properties`. Guarde os dois para atualizar o app sem desinstalar.
+
 ```bash
-npm run monitor
+adb install -r android/app/build/outputs/apk/release/app-release.apk
 ```
-Monitora as mensagens MQTT publicadas pelo servidor.
 
-## Estrutura dos Eventos MQTT
+Se o celular ainda tiver a versão de depuração, desinstale antes. A assinatura é outra e o Android recusa a troca.
 
-Os eventos são publicados no tópico `alarm/events` com a seguinte estrutura:
+Para gerar de novo, com o JDK 21 e o Android SDK:
+
+```bash
+export JAVA_HOME="$HOME/Android/jdk-21"
+export ANDROID_HOME="$HOME/Android/Sdk"
+cd android
+"$HOME/Android/gradle-8.13/bin/gradle" assembleRelease
+```
+
+As notificações usam Firebase. O `google-services.json` fica em `android/app/` e não entra no git. A conta de serviço fica só no banco, pela aba Ajustes do admin.
+
+## Eventos MQTT
+
+O formato publicado em `alarm/events` não muda:
 
 ```json
 {
   "type": "ARM",
-  "event_code": "3441",
+  "event_code": "3401",
   "account_code": "0001",
-  "qualifier_code": "14",
+  "qualifier_code": "01",
   "zone_user": "001",
-  "message": "Sistema armado - Código: 3441, Zona/Usuário: 1",
-  "timestamp": "2025-07-22T10:30:00.000Z",
+  "message": "Sistema armado - Código: 3401, Zona/Usuário: 1",
+  "timestamp": "2026-10-08T12:00:00.000Z",
   "raw_data": {
-    "hex": "24303030313334343130313030303821",
-    "ascii": "$000134410100008!"
+    "hex": "24303030313334303130313030313100",
+    "ascii": "$00013401010011"
   }
 }
 ```
 
-## Tipos de Eventos
+Códigos tratados: 3441, 3401, 3407 e 3409 armam; 1441, 1401, 1407 e 1409 desarmam; 1130 dispara; 3130 restaura; 1301 e 3301 são falha e retorno da rede; 1570 é zona inibida.
 
-- **ARM**: Sistema armado
-- **DISARM**: Sistema desarmado
-- **ALARM_TRIGGER**: Alarme disparado
-- **ALARM_RESTORE**: Alarme restaurado
-- **AC_FAULT**: Falha de energia
-- **AC_RESTORE**: Energia restaurada
-- **IDENTIFICATION**: Evento de identificação da central
-- **UNKNOWN**: Evento não mapeado (respondido com ACK para evitar retransmissão ou erro na central)
+## Testes
 
-## Expandindo os Eventos
-
-Para adicionar novos eventos, edite o objeto `EVENT_TYPES` no arquivo `alarm-server.js`:
-
-```javascript
-const EVENT_TYPES = {
-    // Seus eventos atuais...
-    
-    // Adicione novos eventos baseados na tabela Contact ID
-    '1570': 'BYPASS_ZONE',     // Zona bypassed
-    '3570': 'BYPASS_RESTORE',  // Bypass restaurado
-    // ... outros eventos conforme necessário
-};
+```bash
+npm test
 ```
 
-Consulte o **item 29 do manual da central** para a tabela completa de códigos Contact ID disponíveis.
-
-## Arquivos do Projeto
-
-- `alarm-server.js`: Servidor principal TCP/MQTT
-- `package.json`: Configurações e dependências do projeto
-- `alarme-server.service`: Arquivo de serviço systemd (Linux)
-- `exec-test.js`: Script de teste
-- `teste.js`: Script de teste adicional
-
-## Logs e Monitoramento
-
-O servidor exibe logs detalhados incluindo:
-- Conexões TCP recebidas
-- Dados hexadecimais e ASCII dos eventos
-- Eventos processados e publicados no MQTT
-- Erros e status de conexão
-
-## Integração com Home Assistant
-
-Exemplo de configuração MQTT sensor no Home Assistant:
-
-```yaml
-mqtt:
-  sensor:
-    - name: "Alarme Status"
-      state_topic: "alarm/events"
-      value_template: "{{ value_json.type }}"
-      json_attributes_topic: "alarm/events"
-```
-
-## Contribuindo
-
-Para adicionar suporte a novos eventos:
-1. Consulte a tabela Contact ID no manual da central (item 29)
-2. Adicione o código no objeto `EVENT_TYPES`
-3. Atualize a função `getEventMessage()` se necessário
-4. Teste com o simulador incluído
-
-## Licença
-
-MIT License
+Os testes usam uma central falsa. Não ocupam a porta 9999.

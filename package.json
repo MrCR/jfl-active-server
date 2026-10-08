@@ -6,8 +6,12 @@
   "scripts": {
     "start": "node alarm-server.js",
     "dev": "nodemon alarm-server.js",
-    "test": "node test-alarm-simulator.js",
-    "monitor": "node mqtt-monitor.js"
+    "test": "node --test test/*.test.js",
+    "api": "node api/server.js",
+    "create-user": "node api/bin/create-user.js",
+    "monitor": "node mqtt-monitor.js",
+    "probe": "node probe-server.js",
+    "proxy": "node proxy.js"
   },
   "dependencies": {
     "mqtt": "^5.3.4",
