@@ -229,6 +229,27 @@ test('usuário 000 da central aceita nome e a notificação mostra o horário do
     }
 });
 
+test('stay do teclado avisa uma vez e não repete cada zona inibida', async () => {
+    const app = await boot();
+    try {
+        user(app, 'ana', 'admin', 'Ana');
+        app.store.savePanelUsers([{ code: '000', name: 'Master' }]);
+        const fake = await connectFake(app.panelPort);
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        const before = app.notes.length;
+        fake.send(contactId('3441', '000'));
+        fake.send(contactId('1570', '001'));
+        fake.send(contactId('1570', '002'));
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        const added = app.notes.slice(before);
+        assert.equal(added.length, 1);
+        assert.match(added[0], /armada em stay por Master/);
+        fake.socket.end();
+    } finally {
+        await app.close();
+    }
+});
+
 test('admin apaga outro usuário e a sessão dele deixa de valer', async () => {
     const app = await boot();
     try {

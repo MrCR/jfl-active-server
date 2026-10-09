@@ -90,6 +90,20 @@ test('status de 66 bytes: relógio, bateria, rede e zona 7', () => {
     assert.equal(parseStatus(frame).batteryVolts, 9.4);
 });
 
+test('partição ainda não mapeada do stay do teclado continua com desarme', () => {
+    const frame = Buffer.alloc(66, 0);
+    frame[0] = 0x36;
+    frame[27] = 0x03;
+    frame[31] = 0x88;
+    assert.equal(parseStatus(frame).partitions[0].state, 'unknown');
+    assert.equal(panelMode(parseStatus(frame)), 'armed');
+    frame[31] = 0x81;
+    assert.equal(panelMode(parseStatus(frame)), 'stay');
+    frame[27] = 0x00;
+    frame[31] = 0x88;
+    assert.equal(panelMode(parseStatus(frame)), 'unknown');
+});
+
 test('Contact ID no formato que o MQTT já publica', () => {
     const frame = Buffer.concat([
         Buffer.from('$00013401010011', 'ascii'),

@@ -295,11 +295,12 @@ function frameKind(byte) {
 
 function panelMode(status) {
     const partition = status.partitions?.find((item) => item.id === 1);
-    if (!partition || partition.state === 'unknown') return 'unknown';
+    if (!partition) return 'unknown';
     if (partition.state === 'alarm' || status.zones?.some((zone) => zone.state === 'alarm')) return 'alarm';
     if (partition.state === 'disarmed') return 'disarmed';
     if (status.zones?.some((zone) => zone.state === 'inhibited')) return 'stay';
-    return 'armed';
+    if (partition.state === 'armed' || partition.raw) return 'armed';
+    return 'unknown';
 }
 
 module.exports = {

@@ -24,6 +24,7 @@ async function start(options = {}) {
         await sendFcm(store, text);
     });
     let mqttClient = null;
+    let stayBypassUntil = 0;
 
     function publish(event) {
         if (!mqttClient || !mqttClient.connected) return;
@@ -45,6 +46,8 @@ async function start(options = {}) {
         onIdent: publish,
         onEvent(event, pending) {
             const attributed = pending && event.event_code !== '1570';
+            if (event.event_code === '3441') stayBypassUntil = Date.now() + 15000;
+            const stayBypass = event.event_code === '1570' && Date.now() < stayBypassUntil;
             store.insertEvent({
                 at: event.timestamp,
                 event_code: event.event_code,
@@ -66,6 +69,7 @@ async function start(options = {}) {
                 }
                 return;
             }
+            if (stayBypass) return;
             void safeNotify(eventText(store, event));
         },
     });

@@ -210,7 +210,9 @@ function eventText(store, event) {
     let text;
     switch (event.type) {
         case 'ARM':
-            text = origin ? `Central armada por ${person}, ${origin}` : `Central armada por ${person}`;
+            text = String(event.event_code || '').endsWith('441')
+                ? `Central armada em stay por ${person}`
+                : (origin ? `Central armada por ${person}, ${origin}` : `Central armada por ${person}`);
             break;
         case 'DISARM':
             text = origin ? `Central desarmada por ${person}, ${origin}` : `Central desarmada por ${person}`;
